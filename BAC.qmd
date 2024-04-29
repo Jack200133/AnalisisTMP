@@ -1,0 +1,304 @@
+---
+title: "BAC"
+author: "Angel Carrera"
+format: html
+editor: visual
+---
+
+```{r echo=F, include=FALSE}
+library(nortest)
+library(dplyr)
+library(hopkins)
+library(factoextra)
+library(ggrepel)
+library(cluster)
+library(flexclust)
+library(FeatureImpCluster)
+library(stringr)
+library(tidyr)
+library(stats)
+library(graphics)
+library(NbClust)
+library(mclust)
+library(GGally)
+library(corrplot)
+library(caret)
+library(ggplot2)
+library(kableExtra)
+library(e1071)
+library(rpart)
+library(rpart.plot)
+library(naivebayes)
+library(randomForest)
+library(RColorBrewer)
+library(ca)
+library(vcd)
+library(corrplot)
+
+if (!"psych" %in% installed.packages()) install.packages("psych", depend = TRUE)
+if (!"FactoMineR" %in% installed.packages()) install.packages("FactoMineR", depend = TRUE)
+if (!"corrplot" %in% installed.packages()) install.packages("corrplot", depend = TRUE)
+if (!"fpc" %in% installed.packages()) install.packages("fpc", depend = TRUE)
+if (!"factoextra" %in% installed.packages()) install.packages("factoextra", depend = TRUE)
+if (!"PCAmixdata" %in% installed.packages()) install.packages("PCAmixdata", depend = TRUE)
+
+
+library(psych)
+library(FactoMineR)
+library(fpc)
+library(factoextra)
+library(corrplot)
+library(PCAmixdata)
+
+```
+
+```{r echo=F, include=FALSE}
+datos <- read.csv("Base_entrenamiento.csv", header=TRUE)
+```
+
+# Analisis de Auto_cura
+
+# Analisis Exploratorio
+
+## Tipo de cada una de las variables de dataset
+
+### Categorica Nominal
+
+-   **pc_peor_estado_act_cta_aho** (Peor estado cuenta ahorro)
+-   **cluster_recod** (segmento cluster)
+-   **pc_ingreso_rutina_con_techo** (Ingreso por rutina una vez aplicada los techos por segmento)
+-   **cp_esta_cuota_otro** (Es el estado de la cuota otro)
+-   **banca_completa** (Si el cliente pertenece al segmento banca completa o no)
+-   **segmentoestructural** (Segmento estructural)
+-   **subsegmentoestructural** (Sub segmento estructural)
+
+### Cuantitiva Continua
+
+-   **desv_sem** (desviación estándar del máximo de moras en el semestre anterior)
+-   **prom_bim** (promedio del máximo de moras en el bimestre anterior)
+-   **prom_mes_anterior** (Promedio de los dias de mora en el mes anterior)
+-   **prom_sem** (promedio del máximo de moras en el semestre anterior)
+-   **prom_trim** (promedio del máximo de moras en el trimestre anterior)
+-   **desv_trim** (desviación estándar del máximo de moras en el trimestre anterior)
+-   **desv_bim** (desviación estándar del máximo días de mora en el bimestre anterior)
+-   **dh_avg_dia_retiros_d** (Día promedio del mes en el que realiza los retiros)
+-   **cpc_avg_proc_deuda** (Promedio del porcentaje de las deudas de un cliente en el mes anterior)
+-   **pc_saldo_prom3_tdc_entidad** (Saldo promedio de los últimos 3 meses de tarjeta de crédito en el banco)
+-   **dh_avg_dia_entradas** (Día promedio del mes en el que recibe las entradas de dinero)
+-   **dh_avg_dia_pagos_d** (Día del mes promedio en el que hace las salidas de dinero por pagos)
+-   **cpc_avg_nro_cuota** (Promedio del número de cuotas entre todos los productos del cliente)
+-   **gsm_prom_dias_gest** (Promedio de los días en que se realizaron gestiones en el mes anterior)
+-   **cpc_avg_saldo** (Promedio del saldo de las obligaciones del cliente en el mes anterior)
+-   **dh_avg_dia_salidas** (Día promedio del mes en el que hace las salidas de dinero)
+
+### Cuantitativa discreta
+
+-   **max_trim** (máximo días de mora en el trimestre anterior)
+-   **max_sem** (máximo días de mora en el semestre anterior)
+-   **max_mes_anterior** (días de mora máximo en el mes anterior)
+-   **cpc_max_nro_cuota** (Máximo número de cuotas entre todos los productos del cliente en el mes anterior)
+-   **cpc_min_nro_cuota** (Mínimo número de cuotas entre todos los productos del cliente en el mes anterior)
+-   **nro_gestiones** (Numero de gestiones realizadas)
+
+### No clasificada
+
+-   otros (variables que no se clasificaron fácilmente en las categorías anteriores debido a la falta de información específica en sus descripciones)
+
+## 1. Analisis de NA y Limpieza
+
+Los datos se ecuentran con muchos valores numericos pero que son cualitativos. Por lo tanto, se convirtieron en facotres
+
+```{r echo=F}
+cualitativas <- c('mejor_gestion', 
+'pc_cant_moras_30_ult_12_meses',
+'nro_gestiones',
+'pc_cant_moras_30_ult_3_meses', 
+'pc_tiem_1er_prod_abierto_total',
+'pc_cant_moras_60_ult_12_meses', 
+'gestiones_eficaces', 
+'dh_max_dia_entradas',
+'pc_cupo_entidad',
+'pc_cant_moras_90_ult_12_meses',
+'dh_max_dia_salidas', 
+'pc_cant_moras_60_ult_3_meses', 
+'cp_inicial_menos_saldo', 
+'pc_peor_estado_act_cta_aho',
+'dia_pago','cp_cuotas_falta', 
+'pcons_tarjeta_de_credito', 
+'gestiones_prod',
+'pcons_vehiculos_sufi',
+'cluster_recod',
+'dh_cant_otros_d',
+'pc_cont_30_lt_12m_tot_sf',
+'pc_cant_mora90_ult_12m_total', 
+'dh_cant_pagos_d', 
+'dc_porc_prod_sin_mora',
+'dh_min_dia_pagos_d', 
+'dh_min_dia_pago_tarj_d',
+'cp_nro_cuota',
+'cp_valor_inicial', 
+'dh_max_dia_otros_d', 
+'cp_cuota_sobre_saldo',
+'dh_cant_pago_tarj_d',
+'dh_max_dia_pagos_d', 
+'cp_saldo_sobre_inicial',
+'cp_esta_cuota_otro',
+'dh_max_dia_retiros_d',
+'dh_min_dia_tras_d', 
+'cp_porc_valorcuot_ing',
+'pc_tiem_lt_prod_abie_total',
+'marca_info_cifin_decode',
+'dh_max_dia_pago_tarj_d', 
+'pc_cantidad_tdc_entidad',
+'dh_min_dia_otros_d',
+'dc_cant_obligaciones',
+'cp_saldo', 
+'cp_cuota_sobre_inicial',
+'cp_porc_saldo_ing',
+'gsm_mejor_gestion',
+'dh_min_dia_nomina_c', 
+'dh_max_dia_nomina_c',
+'cp_valor_cuota',
+'gsm_prom_dias_gest',
+'pc_cuota_no_rot_ent',
+'banca_completa',
+'dh_min_dia_pago_cred_d',
+'dh_cant_tras_d',
+'dh_max_dia_comisio_d',
+'pc_productos_no_rotativos_entidad', 
+'pc_vi_no_rotativos_entidad',
+'dh_min_dia_entradas',
+'pcons_hipotecario_vivienda',
+'gsm_mejor_gestion_3m', 
+'y_auto_cura',
+'anhomes_ciclo')
+
+datos[, cualitativas] <- lapply(datos[, cualitativas], as.factor)
+```
+
+```{r echo=F}
+prop.table(colSums(is.na(datos))) * 100
+```
+
+Todos los datos tienen un 0.8% de NAs ppor lo que se decidio eliminar todas las filas con NA ya que no representan algo signiticativo en la media
+
+```{r}
+datos <- na.omit(datos)
+```
+
+## 2. Resumen del conjunto de datos
+
+El conjunto de datos esta compuesto por `r nrow(datos)` filas y `r ncol(datos)` columnas.
+
+```{r}
+summary(datos)
+```
+
+-   Se puede observar que la mayoria de los datos tienen un Auto_Cura de 1 ( obligracion pagada en menos de 15 dias ) por lo que el dataset esta desbalanceado
+
+-   La media del atraso del mes anterior es de 7 dias haciendo que la mayoria de los datos esten efectivamente debajo de esos 15 dias de deteccion
+
+-   Existen muchas variables que no son significativas que podrian crear solo ruido
+
+Para eliminar las variables que no son significativas usare un PCA y asi limitar las dimensiones del dataset
+
+## 3. PCA
+
+Primero buscaremos si la matriz de correlacion es lo suficiente cercana a 0
+
+```{r}
+
+# Identificar columnas numéricas
+columnas_numericas <- sapply(datos, is.numeric)
+
+# Filtrar solo columnas numéricas
+datos_numericos <- datos[, columnas_numericas]
+
+# Calcular la matriz de correlación usando solo las columnas numéricas
+rcor <- cor(datos_numericos, use = "pairwise.complete.obs")
+
+# Verificar el determinante de la matriz de correlación
+det(rcor)
+
+```
+
+Se debe analizar si se puede usar el análisis factorial para formar las combinaciones lineales de las variables
+
+```{r}
+KMO(as.matrix(datos_numericos)) # 0.5 La adecuación a la muestra es mala
+cortest.bartlett(datos_numericos) # Inf Mientras mas alto sea mejor
+
+```
+
+Pero hay que ver el nivel de significación de la prueba de esfericidad de Bartlett
+
+H0: la matriz de correlaciones es igual a la matriz identidad
+
+se busca rechazar la hipótesis nula de que la matriz es diferente a la matriz identidad y por ende,
+
+suficiente multicolinealidad entre las variables
+
+En una matriz de identidad la diagonal es 1, y los valores fuera de la diagonal son 0. Esto implica que no hay
+
+más colinealidad entre las variables que la que hay entre cada variable consigo misma
+
+```{r}
+cortest.bartlett(datos_numericos)
+```
+
+El valor p es de 0 lo que lo hace muy pequeño menor a 0.05, esto nos dice que el análisis factorial si podría funciona
+
+```{r}
+cor_matrix <- cor(datos_numericos, use = "pairwise.complete.obs")
+
+# Gráfico de la matriz de correlación usando corrplot
+corrplot(cor_matrix, method = "color", type = "upper", order = "hclust",
+         tl.col = "black", tl.srt = 45, # Text label color and rotation
+         addCoef.col = "black", # Añadir coeficientes de correlación al gráfico
+         # Ajustar la paleta de colores:
+         col = colorRampPalette(c("#6D9EC1", "white", "#E46726"))(200),
+         diag = FALSE) # No mostrar la diagonal principal
+```
+
+```{r}
+compPrinc <- prcomp(datos_numericos, scale = T)
+compPrinc
+```
+
+```{r}
+summary(compPrinc)
+```
+
+```{r}
+
+# Seleccionar solo columnas numéricas
+datos_numericos <- datos[, sapply(datos, is.numeric)]
+
+# Ejecutar PCA solo en columnas numéricas
+compPrincPCA <- PCA(datos_numericos, ncp = ncol(datos_numericos) - 1, scale.unit = TRUE)
+summary(compPrincPCA)
+
+```
+
+```{r}
+fviz_eig(compPrinc, addlabels = TRUE, ylim = c(0, 80), nbeig = 16)
+
+# Para el gráfico de valores propios
+fviz_eig(compPrinc, addlabels = TRUE, choice = "eigenvalue", ylim = c(0, 3), nbeig = 16)
+
+fviz_pca_biplot(compPrinc, repel = FALSE, axes = c(1, 2))
+```
+
+Para obtener un 74.4 de la varianza de los datos se usaran las 10 dimensiones del dataset
+
+```{r}
+var <- get_pca_var(compPrinc)
+corrplot(var$cos2, is.corr = F,
+         tl.cex = 0.6,
+          tl.srt = 45,
+         tl.offset = 1,
+         number.cex = 0.7)
+
+```
+
+Viendo la relacion de las dimensionalidades se obtara por usar 12 dimensiones y las columnas de dh_val_otros_d
